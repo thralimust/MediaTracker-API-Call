@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ConfigHandler implements HttpHandler {
+public class InteractionService implements HttpHandler {
 
     private static final int MAX_RETRIES = 6;
     private static final int TOTAL_TIME_MS = 30_000;
@@ -21,14 +21,7 @@ public class ConfigHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-            String error = "Only POST method is supported.";
-            exchange.sendResponseHeaders(405, error.length());
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(error.getBytes());
-            }
-            return;
-        }
+
 
         URI requestURI = exchange.getRequestURI();
         String query = requestURI.getQuery();
@@ -50,15 +43,15 @@ public class ConfigHandler implements HttpHandler {
                 jsonResponse.put("message", "Invalid GENESYS_EXTENSION value");
                 statusCode = 400;
             } else {
-                // Track how many times we've attempted this extension
                 int currentTry = extensionAttempts.getOrDefault(value, 0) + 1;
                 extensionAttempts.put(value, currentTry);
 
-                long delay = TOTAL_TIME_MS / MAX_RETRIES;
-                try {
-                    Thread.sleep(delay);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                if (currentTry > MAX_RETRIES) {
+                    try {
+                        Thread.sleep(TOTAL_TIME_MS);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 if (currentTry < MAX_RETRIES) {
@@ -68,7 +61,6 @@ public class ConfigHandler implements HttpHandler {
                     jsonResponse.put("InteractionId", interactionId);
                     statusCode = 200;
                 } else {
-                    // On 6th time, return failure
                     String correlationId = UUID.randomUUID().toString();
                     String message = String.format("Unable retrieve action ConversationId for userId: %s after 6 tries. CorrelationId: %s", value, correlationId);
                     jsonResponse.put("status", "error");
@@ -80,7 +72,6 @@ public class ConfigHandler implements HttpHandler {
             }
         }
 
-        // Send JSON response
         byte[] responseBytes = jsonResponse.toString().getBytes();
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(statusCode, responseBytes.length);
