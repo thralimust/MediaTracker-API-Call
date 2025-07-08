@@ -1,7 +1,7 @@
-package SWBS.mediatracker;
+package server.mediatracker;
 
-import SWBS.mediatracker.service.InteractionService;
-import SWBS.mediatracker.service.ConfigProperties;
+import server.mediatracker.service.InteractionService;
+import server.mediatracker.service.ConfigProperties;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.*;

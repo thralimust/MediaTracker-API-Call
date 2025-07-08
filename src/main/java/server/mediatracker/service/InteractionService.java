@@ -1,4 +1,4 @@
-package SWBS.mediatracker.service;
+package server.mediatracker.service;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;

@@ -1,4 +1,4 @@
-package SWBS.mediatracker.service;
+package server.mediatracker.service;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
